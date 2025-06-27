@@ -1,11 +1,15 @@
+const cacheName = "camp-gear-cache-v1";
+const filesToCache = [
+  "./",
+  "./index.html",
+  "./icon.png",
+  "./manifest.json"
+];
+
 self.addEventListener("install", e => {
   e.waitUntil(
-    caches.open("camp-cache-v1").then(cache => {
-      return cache.addAll([
-        "index.html",
-        "manifest.json",
-        "icon.png"
-      ]);
+    caches.open(cacheName).then(cache => {
+      return cache.addAll(filesToCache);
     })
   );
 });

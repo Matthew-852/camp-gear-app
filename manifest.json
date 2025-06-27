@@ -1,20 +1,21 @@
 {
   "name": "露營裝備總管",
-  "short_name": "露營裝備",
-  "start_url": "index.html",
+  "short_name": "裝備總管",
+  "description": "管理你的露營裝備清單，支援安裝與離線瀏覽。",
+  "start_url": "./index.html",
   "display": "standalone",
+  "theme_color": "#ffffff",
   "background_color": "#f5f5f5",
-  "theme_color": "#4a90e2",
   "icons": [
     {
       "src": "icon.png",
-      "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "sizes": "192x192"
     },
     {
       "src": "icon.png",
-      "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "sizes": "512x512"
     }
   ]
 }
