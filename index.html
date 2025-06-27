@@ -41,17 +41,43 @@
       margin-bottom: 10px;
     }
 
-    .controls input, .controls select {
-      margin: 5px;
-      padding: 8px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 14px;
-    }
+    .controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
+}
 
-    .controls input[type="file"] {
-      padding: 4px;
-    }
+.controls input,
+.controls select,
+.controls button {
+  flex: 1 1 100%;
+  font-size: 16px;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.controls input[type="file"] {
+  padding: 6px;
+}
+
+button {
+  font-size: 16px;
+  padding: 10px;
+  cursor: pointer;
+}
+
+@media (min-width: 600px) {
+  .controls input,
+  .controls select {
+    flex: 1 1 calc(50% - 10px);
+  }
+
+  .controls button {
+    flex: 1 1 100%;
+  }
+}
+
 
     .gear-section {
       margin-top: 20px;
