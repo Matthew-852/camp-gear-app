@@ -9,15 +9,131 @@
   <link rel="manifest" href="manifest.json" />
 </head>
 <body>
-  <h1>🏕️ 我的露營裝備總管</h1>
-  <p>這是一個簡易測試頁面，用來檢查 manifest 是否被偵測</p>
+  <div class="container">
+    <h1>🏕️ 我的露營裝備總管</h1>
+    <div class="theme-toggle">
+      <label>
+        🌗 主題：
+        <select id="themeSwitcher" onchange="toggleTheme()">
+          <option value="light">亮色</option>
+          <option value="dark">暗色</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="controls">
+      <input type="text" id="gearName" placeholder="裝備名稱" />
+      <input type="number" id="gearWeight" placeholder="重量 (g)" />
+      <input type="number" id="gearQty" placeholder="數量" value="1" min="1" />
+      <select id="gearCategory">
+        <option value="睡眠區">睡眠區</option>
+        <option value="炊具區">炊具區</option>
+        <option value="照明區">照明區</option>
+        <option value="衣物區">衣物區</option>
+        <option value="其他">其他</option>
+      </select>
+      <input type="file" id="gearImage" accept="image/*" />
+      <button onclick="addGear()">➕ 加入裝備</button>
+    </div>
+
+    <div class="gear-section" id="gearList"></div>
+    <div class="total" id="totalWeight">總重量：0 g</div>
+    <button onclick="exportList()">📤 匯出裝備清單</button>
+    <textarea id="exportArea" placeholder="這裡會顯示勾選的裝備清單文字"></textarea>
+  </div>
 
   <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('service-worker.js').then(() => {
-        console.log("✅ Service Worker 註冊成功");
-      });
+    let gears = [];
+
+    window.onload = () => {
+      const saved = localStorage.getItem("campGearV2");
+      const theme = localStorage.getItem("campTheme") || "light";
+      document.body.classList.toggle("dark", theme === "dark");
+      document.getElementById("themeSwitcher").value = theme;
+      document.getElementById("theme-color").setAttribute("content", theme === "dark" ? "#1a1a1a" : "#ffffff");
+
+      if (saved) {
+        gears = JSON.parse(saved);
+        renderGearList();
+      }
+
+      // 註冊 Service Worker
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('service-worker.js')
+          .then(reg => console.log("Service Worker 註冊成功！", reg))
+          .catch(err => console.warn("註冊失敗", err));
+      }
+    };
+
+    function toggleTheme() {
+      const selected = document.getElementById("themeSwitcher").value;
+      document.body.classList.toggle("dark", selected === "dark");
+      localStorage.setItem("campTheme", selected);
+      document.getElementById("theme-color").setAttribute("content", selected === "dark" ? "#1a1a1a" : "#ffffff");
     }
-  </script>
-</body>
-</html>
+
+    function saveGears() {
+      localStorage.setItem("campGearV2", JSON.stringify(gears));
+    }
+
+    function addGear() {
+      const name = document.getElementById("gearName").value.trim();
+      const weight = parseFloat(document.getElementById("gearWeight").value);
+      const qty = parseInt(document.getElementById("gearQty").value);
+      const category = document.getElementById("gearCategory").value;
+      const file = document.getElementById("gearImage").files[0];
+
+      if (!name || isNaN(weight) || isNaN(qty) || qty < 1) return;
+
+      let imgData = "";
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          imgData = e.target.result;
+          gears.push({ name, weight, qty, category, checked: false, image: imgData });
+          saveGears();
+          renderGearList();
+        };
+        reader.readAsDataURL(file);
+      } else {
+        gears.push({ name, weight, qty, category, checked: false, image: "" });
+        saveGears();
+        renderGearList();
+      }
+
+      document.getElementById("gearName").value = "";
+      document.getElementById("gearWeight").value = "";
+      document.getElementById("gearQty").value = 1;
+      document.getElementById("gearImage").value = null;
+    }
+
+    function renderGearList() {
+      const container = document.getElementById("gearList");
+      container.innerHTML = "";
+
+      const grouped = {};
+      gears.forEach(g => {
+        if (!grouped[g.category]) grouped[g.category] = [];
+        grouped[g.category].push(g);
+      });
+
+      for (let cat in grouped) {
+        const catBlock = document.createElement("div");
+        catBlock.innerHTML = `<div class="gear-category">${cat}</div>`;
+        grouped[cat]
+          .sort((a, b) => (a.weight * a.qty) - (b.weight * b.qty))
+          .forEach(g => {
+            const item = document.createElement("div");
+            item.className = "gear-item";
+
+            const label = document.createElement("div");
+            label.className = "gear-label";
+
+            if (g.image) {
+              const img = document.createElement("img");
+              img.src = g.image;
+              label.appendChild(img);
+            }
+
+            const text = document.createElement("span");
+            text.textContent = `${g.name} (${g.weight}g ×${g.qty})
