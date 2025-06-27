@@ -44,8 +44,9 @@
     .controls {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: 12px;
+  margin-bottom: 16px;
+  justify-content: center;
 }
 
 .controls input,
@@ -54,6 +55,7 @@
   flex: 1 1 100%;
   font-size: 16px;
   padding: 10px;
+  border-radius: 8px;
   box-sizing: border-box;
 }
 
@@ -64,13 +66,20 @@
 button {
   font-size: 16px;
   padding: 10px;
-  cursor: pointer;
+  border-radius: 8px;
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+}
+
+button:hover {
+  background-color: #3a78c2;
 }
 
 @media (min-width: 600px) {
   .controls input,
   .controls select {
-    flex: 1 1 calc(50% - 10px);
+    flex: 1 1 calc(50% - 12px);
   }
 
   .controls button {
