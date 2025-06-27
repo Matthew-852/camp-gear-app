@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <title>露營裝備總管</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#ffffff" id="theme-color" />
   <link rel="icon" href="icon.png" type="image/png" />
   <link rel="manifest" href="manifest.json" />
 
@@ -167,16 +166,6 @@
   <div class="container">
     <h1>🏕️ 我的露營裝備總管</h1>
 
-    <div class="theme-toggle">
-      <label>
-        🌗 主題：
-        <select id="themeSwitcher" onchange="toggleTheme()">
-          <option value="light">亮色</option>
-          <option value="dark">暗色</option>
-        </select>
-      </label>
-    </div>
-
     <div class="controls">
       <input type="text" id="gearName" placeholder="裝備名稱" />
       <input type="number" id="gearWeight" placeholder="重量 (g)" />
@@ -205,11 +194,7 @@
       const theme = localStorage.getItem("campTheme") || "light";
       document.body.classList.toggle("dark", theme === "dark");
       document.getElementById("themeSwitcher").value = theme;
-      const themeMeta = document.getElementById("theme-color");
-      if (themeMeta) {
-        themeMeta.setAttribute("content", theme === "dark" ? "#1a1a1a" : "#ffffff");
-      }
-
+      
       if (saved) {
         gears = JSON.parse(saved);
         renderGearList();
@@ -222,16 +207,7 @@
       }
     };
 
-    function toggleTheme() {
-      const selected = document.getElementById("themeSwitcher").value;
-      document.body.classList.toggle("dark", selected === "dark");
-      localStorage.setItem("campTheme", selected);
-      const themeMeta = document.getElementById("theme-color");
-      if (themeMeta) {
-        themeMeta.setAttribute("content", selected === "dark" ? "#1a1a1a" : "#ffffff");
-      }
-    }
-
+    
     function saveGears() {
       localStorage.setItem("campGearV2", JSON.stringify(gears));
     }
@@ -305,6 +281,14 @@
               g.checked = checkbox.checked;
               saveGears();
               updateTotal();
+function updateTotal() {
+  const total = gears
+    .filter(g => g.checked && !isNaN(g.weight) && !isNaN(g.qty))
+    .reduce((sum, g) => sum + g.weight * g.qty, 0);
+
+  document.getElementById("totalWeight").textContent = `總重量：${total} g`;
+}
+
             };
 
             const delBtn = document.createElement("button");
