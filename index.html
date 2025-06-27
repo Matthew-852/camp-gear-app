@@ -206,9 +206,8 @@
       document.body.classList.toggle("dark", theme === "dark");
       document.getElementById("themeSwitcher").value = theme;
       const themeMeta = document.getElementById("theme-color");
-      if (themeMeta) {
-        themeMeta.setAttribute("content", theme === "dark" ? "#1a1a1a" : "#ffffff");
-      }
+      document.getElementById("theme-color").setAttribute("content", ...);
+
 
       if (saved) {
         gears = JSON.parse(saved);
