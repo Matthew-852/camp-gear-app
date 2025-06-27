@@ -296,3 +296,20 @@ button:hover {
 
             const text = document.createElement("span");
             text.textContent = `${g.name} (${g.weight}g ×${g.qty})
+function updateTotal() {
+      const total = gears.filter(g => g.checked).reduce((sum, g) => sum + g.weight * g.qty, 0);
+      document.getElementById("totalWeight").textContent = `總重量：${total} g`;
+    }
+
+    function exportList() {
+      let out = "【我的露營裝備清單】\n";
+      gears.forEach(g => {
+        if (g.checked) {
+          out += `✔ ${g.name} - ${g.weight}g ×${g.qty} → ${g.weight * g.qty}g [${g.category}]\n`;
+        }
+      });
+      const total = gears.filter(g => g.checked).reduce((sum, g) => sum + g.weight * g.qty, 0);
+      out += `\n總重量：${total} g`;
+      document.getElementById("exportArea").value = out;
+    }
+  </script>
