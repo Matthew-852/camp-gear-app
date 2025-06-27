@@ -201,115 +201,152 @@ button:hover {
     <textarea id="exportArea" placeholder="這裡會顯示勾選的裝備清單文字"></textarea>
   </div>
 
-  <script>
-    let gears = [];
+ <script>
+  let gears = [];
 
-    window.onload = () => {
-      const saved = localStorage.getItem("campGearV2");
-      const theme = localStorage.getItem("campTheme") || "light";
-      document.body.classList.toggle("dark", theme === "dark");
-      document.getElementById("themeSwitcher").value = theme;
-      document.getElementById("theme-color").setAttribute("content", theme === "dark" ? "#1a1a1a" : "#ffffff");
+  window.onload = () => {
+    const saved = localStorage.getItem("campGearV2");
+    const theme = localStorage.getItem("campTheme") || "light";
+    document.body.classList.toggle("dark", theme === "dark");
+    document.getElementById("themeSwitcher").value = theme;
+    document.getElementById("theme-color").setAttribute("content", theme === "dark" ? "#1a1a1a" : "#ffffff");
 
-      if (saved) {
-        gears = JSON.parse(saved);
-        renderGearList();
-      }
-
-      // 註冊 Service Worker
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('service-worker.js')
-          .then(reg => console.log("Service Worker 註冊成功！", reg))
-          .catch(err => console.warn("註冊失敗", err));
-      }
-    };
-
-    function toggleTheme() {
-      const selected = document.getElementById("themeSwitcher").value;
-      document.body.classList.toggle("dark", selected === "dark");
-      localStorage.setItem("campTheme", selected);
-      document.getElementById("theme-color").setAttribute("content", selected === "dark" ? "#1a1a1a" : "#ffffff");
+    if (saved) {
+      gears = JSON.parse(saved);
+      renderGearList();
     }
 
-    function saveGears() {
-      localStorage.setItem("campGearV2", JSON.stringify(gears));
+    // 註冊 Service Worker
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("service-worker.js")
+        .then(reg => console.log("✅ Service Worker 註冊成功", reg))
+        .catch(err => console.warn("❌ Service Worker 註冊失敗", err));
     }
+  };
 
-    function addGear() {
-      const name = document.getElementById("gearName").value.trim();
-      const weight = parseFloat(document.getElementById("gearWeight").value);
-      const qty = parseInt(document.getElementById("gearQty").value);
-      const category = document.getElementById("gearCategory").value;
-      const file = document.getElementById("gearImage").files[0];
+  function toggleTheme() {
+    const selected = document.getElementById("themeSwitcher").value;
+    document.body.classList.toggle("dark", selected === "dark");
+    localStorage.setItem("campTheme", selected);
+    document.getElementById("theme-color").setAttribute("content", selected === "dark" ? "#1a1a1a" : "#ffffff");
+  }
 
-      if (!name || isNaN(weight) || isNaN(qty) || qty < 1) return;
+  function saveGears() {
+    localStorage.setItem("campGearV2", JSON.stringify(gears));
+  }
 
-      let imgData = "";
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-          imgData = e.target.result;
-          gears.push({ name, weight, qty, category, checked: false, image: imgData });
-          saveGears();
-          renderGearList();
-        };
-        reader.readAsDataURL(file);
-      } else {
-        gears.push({ name, weight, qty, category, checked: false, image: "" });
+  function addGear() {
+    const name = document.getElementById("gearName").value.trim();
+    const weight = parseFloat(document.getElementById("gearWeight").value);
+    const qty = parseInt(document.getElementById("gearQty").value);
+    const category = document.getElementById("gearCategory").value;
+    const file = document.getElementById("gearImage").files[0];
+
+    if (!name || isNaN(weight) || isNaN(qty) || qty < 1) return;
+
+    let imgData = "";
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        imgData = e.target.result;
+        gears.push({ name, weight, qty, category, checked: false, image: imgData });
         saveGears();
         renderGearList();
+      };
+      reader.readAsDataURL(file);
+    } else {
+      gears.push({ name, weight, qty, category, checked: false, image: "" });
+      saveGears();
+      renderGearList();
+    }
+
+    document.getElementById("gearName").value = "";
+    document.getElementById("gearWeight").value = "";
+    document.getElementById("gearQty").value = 1;
+    document.getElementById("gearImage").value = null;
+  }
+
+  function renderGearList() {
+    const container = document.getElementById("gearList");
+    container.innerHTML = "";
+
+    const grouped = {};
+    gears.forEach(g => {
+      if (!grouped[g.category]) grouped[g.category] = [];
+      grouped[g.category].push(g);
+    });
+
+    for (let cat in grouped) {
+      const catBlock = document.createElement("div");
+      catBlock.innerHTML = `<div class="gear-category">${cat}</div>`;
+      grouped[cat]
+        .sort((a, b) => (a.weight * a.qty) - (b.weight * b.qty))
+        .forEach(g => {
+          const item = document.createElement("div");
+          item.className = "gear-item";
+
+          const label = document.createElement("div");
+          label.className = "gear-label";
+
+          if (g.image) {
+            const img = document.createElement("img");
+            img.src = g.image;
+            label.appendChild(img);
+          }
+
+          const text = document.createElement("span");
+          text.textContent = `${g.name} (${g.weight}g ×${g.qty}) = ${g.weight * g.qty}g`;
+          label.appendChild(text);
+
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.checked = g.checked;
+          checkbox.onchange = () => {
+            g.checked = checkbox.checked;
+            saveGears();
+            updateTotal();
+          };
+
+          const delBtn = document.createElement("button");
+          delBtn.textContent = "🗑️";
+          delBtn.className = "delete";
+          delBtn.onclick = () => {
+            gears = gears.filter(item => item !== g);
+            saveGears();
+            renderGearList();
+            updateTotal();
+          };
+
+          item.appendChild(label);
+          item.appendChild(checkbox);
+          item.appendChild(delBtn);
+          catBlock.appendChild(item);
+        });
+
+      container.appendChild(catBlock);
+    }
+
+    updateTotal();
+  }
+
+  function updateTotal() {
+    const total = gears
+      .filter(g => g.checked)
+      .reduce((sum, g) => sum + g.weight * g.qty, 0);
+    document.getElementById("totalWeight").textContent = `總重量：${total} g`;
+  }
+
+  function exportList() {
+    let out = "【我的露營裝備清單】\n";
+    gears.forEach(g => {
+      if (g.checked) {
+        out += `✔ ${g.name} - ${g.weight}g ×${g.qty} → ${g.weight * g.qty}g [${g.category}]\n`;
       }
-
-      document.getElementById("gearName").value = "";
-      document.getElementById("gearWeight").value = "";
-      document.getElementById("gearQty").value = 1;
-      document.getElementById("gearImage").value = null;
-    }
-
-    function renderGearList() {
-      const container = document.getElementById("gearList");
-      container.innerHTML = "";
-
-      const grouped = {};
-      gears.forEach(g => {
-        if (!grouped[g.category]) grouped[g.category] = [];
-        grouped[g.category].push(g);
-      });
-
-      for (let cat in grouped) {
-        const catBlock = document.createElement("div");
-        catBlock.innerHTML = `<div class="gear-category">${cat}</div>`;
-        grouped[cat]
-          .sort((a, b) => (a.weight * a.qty) - (b.weight * b.qty))
-          .forEach(g => {
-            const item = document.createElement("div");
-            item.className = "gear-item";
-
-            const label = document.createElement("div");
-            label.className = "gear-label";
-
-            if (g.image) {
-              const img = document.createElement("img");
-              img.src = g.image;
-              label.appendChild(img);
-            }
-
-            const text = document.createElement("span");
-            text.textContent = `${g.name} (${g.weight}g ×${g.qty})
-function updateTotal() {
-      const total = gears.filter(g => g.checked).reduce((sum, g) => sum + g.weight * g.qty, 0);
-      document.getElementById("totalWeight").textContent = `總重量：${total} g`;
-    }
-
-    function exportList() {
-      let out = "【我的露營裝備清單】\n";
-      gears.forEach(g => {
-        if (g.checked) {
-          out += `✔ ${g.name} - ${g.weight}g ×${g.qty} → ${g.weight * g.qty}g [${g.category}]\n`;
-        }
-      });
-      const total = gears.filter(g => g.checked).reduce((sum, g) => sum + g.weight * g.qty, 0);
-      out += `\n總重量：${total} g`;
-      document.getElementById("exportArea").value = out;
-    }
-  </script>
+    });
+    const total = gears
+      .filter(g => g.checked)
+      .reduce((sum, g) => sum + g.weight * g.qty, 0);
+    out += `\n總重量：${total} g`;
+    document.getElementById("exportArea").value = out;
+  }
+</script>
